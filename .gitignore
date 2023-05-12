@@ -1,0 +1,6 @@
+data/
+*.sqlite
+*.sqlite3
+.env
+vendor/
+.DS_Store
