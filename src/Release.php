@@ -17,12 +17,53 @@ class Release
 
     /**
      * Return all releases, newest first.
-     * Optionally filter by project slug and/or tag.
+     * Optionally filter by project, tag, and/or full-text search query.
      *
      * @return array<int, array<string, mixed>>
      */
-    public function all(?string $project = null, ?string $tag = null): array
-    {
+    public function all(
+        ?string $project = null,
+        ?string $tag     = null,
+        ?string $search  = null,
+        int     $limit   = 0,
+        int     $offset  = 0,
+    ): array {
+        [$sql, $params] = $this->buildQuery($project, $tag, $search);
+        $sql .= ' ORDER BY released_at DESC, id DESC';
+
+        if ($limit > 0) {
+            $sql           .= ' LIMIT :limit OFFSET :offset';
+            $params[':limit']  = $limit;
+            $params[':offset'] = $offset;
+        }
+
+        return $this->db->fetchAll($sql, $params);
+    }
+
+    /**
+     * Count releases matching the given filters (for pagination).
+     */
+    public function count(
+        ?string $project = null,
+        ?string $tag     = null,
+        ?string $search  = null,
+    ): int {
+        [$sql, $params] = $this->buildQuery($project, $tag, $search);
+        $countSql = 'SELECT COUNT(*) as n FROM (' . $sql . ')';
+        $row      = $this->db->fetchOne($countSql, $params);
+        return (int) ($row['n'] ?? 0);
+    }
+
+    /**
+     * Build the base SELECT + WHERE clause shared by all() and count().
+     *
+     * @return array{string, array<string, mixed>}
+     */
+    private function buildQuery(
+        ?string $project,
+        ?string $tag,
+        ?string $search,
+    ): array {
         $where  = [];
         $params = [];
 
@@ -32,17 +73,21 @@ class Release
         }
 
         if ($tag !== null && $tag !== '') {
-            $where[]         = 'tag = :tag';
-            $params[':tag']  = $tag;
+            $where[]        = 'tag = :tag';
+            $params[':tag'] = $tag;
+        }
+
+        if ($search !== null && $search !== '') {
+            $where[]           = '(project LIKE :search OR version LIKE :search OR body LIKE :search)';
+            $params[':search'] = '%' . $search . '%';
         }
 
         $sql = 'SELECT * FROM releases';
         if ($where) {
             $sql .= ' WHERE ' . implode(' AND ', $where);
         }
-        $sql .= ' ORDER BY released_at DESC, id DESC';
 
-        return $this->db->fetchAll($sql, $params);
+        return [$sql, $params];
     }
 
     /**
@@ -100,5 +145,39 @@ class Release
     {
         $rows = $this->db->fetchAll('SELECT DISTINCT project FROM releases ORDER BY project ASC');
         return array_column($rows, 'project');
+    }
+
+    /**
+     * Return aggregate stats for the stats page.
+     *
+     * @return array<string, mixed>
+     */
+    public function stats(): array
+    {
+        $total = $this->db->fetchOne('SELECT COUNT(*) as n FROM releases');
+
+        $byTag = $this->db->fetchAll(
+            'SELECT tag, COUNT(*) as n FROM releases GROUP BY tag ORDER BY n DESC'
+        );
+
+        $byProject = $this->db->fetchAll(
+            'SELECT project, COUNT(*) as n FROM releases GROUP BY project ORDER BY n DESC'
+        );
+
+        $latest = $this->db->fetchOne(
+            'SELECT released_at FROM releases ORDER BY released_at DESC LIMIT 1'
+        );
+
+        $oldest = $this->db->fetchOne(
+            'SELECT released_at FROM releases ORDER BY released_at ASC LIMIT 1'
+        );
+
+        return [
+            'total'      => (int) ($total['n'] ?? 0),
+            'by_tag'     => $byTag,
+            'by_project' => $byProject,
+            'latest'     => $latest['released_at'] ?? null,
+            'oldest'     => $oldest['released_at'] ?? null,
+        ];
     }
 }
