@@ -6,11 +6,13 @@ require_once __DIR__ . '/../src/Database.php';
 require_once __DIR__ . '/../src/Release.php';
 require_once __DIR__ . '/../src/Router.php';
 require_once __DIR__ . '/../src/View.php';
+require_once __DIR__ . '/../src/Paginator.php';
 
 use Devlog\Database;
 use Devlog\Release;
 use Devlog\Router;
 use Devlog\View;
+use Devlog\Paginator;
 
 // --- Bootstrap ---
 
@@ -23,20 +25,29 @@ $view   = new View(__DIR__ . '/../views');
 // --- Routes ---
 
 /**
- * GET / — Release timeline with optional project/tag filters.
+ * GET / — Release timeline with optional project/tag/search filters and pagination.
  */
 $router->add('GET', '/', function () use ($model, $view): void {
     $filterProject = trim($_GET['project'] ?? '');
-    $filterTag     = trim($_GET['tag'] ?? '');
+    $filterTag     = trim($_GET['tag']     ?? '');
+    $filterSearch  = trim($_GET['q']       ?? '');
+    $currentPage   = max(1, (int) ($_GET['page'] ?? 1));
+    $perPage       = 15;
+
+    $project = $filterProject !== '' ? $filterProject : null;
+    $tag     = $filterTag     !== '' ? $filterTag     : null;
+    $search  = $filterSearch  !== '' ? $filterSearch  : null;
+
+    $total     = $model->count($project, $tag, $search);
+    $paginator = new Paginator($total, $perPage, $currentPage);
 
     $view->render('index', [
-        'releases'      => $model->all(
-            $filterProject !== '' ? $filterProject : null,
-            $filterTag     !== '' ? $filterTag     : null,
-        ),
+        'releases'      => $model->all($project, $tag, $search, $perPage, $paginator->offset),
         'projects'      => $model->projects(),
         'filterProject' => $filterProject,
         'filterTag'     => $filterTag,
+        'filterSearch'  => $filterSearch,
+        'paginator'     => $paginator,
     ]);
 });
 
@@ -167,6 +178,13 @@ $router->add('GET', '/delete/{id}', function (array $params) use ($model): void 
     $model->delete((int) $params['id']);
     header('Location: /');
     exit;
+});
+
+/**
+ * GET /stats — Aggregate stats view.
+ */
+$router->add('GET', '/stats', function () use ($model, $view): void {
+    $view->render('stats', ['stats' => $model->stats()]);
 });
 
 // --- Dispatch ---
