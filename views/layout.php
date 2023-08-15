@@ -66,14 +66,25 @@
                 </svg>
                 devlog
             </a>
-            <a href="/new" class="flex items-center gap-1.5 text-xs text-ctp-subtext0 hover:text-ctp-text border border-ctp-surface0 hover:border-ctp-surface1 px-3 py-1.5 transition-colors">
-                <!-- plus icon -->
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                new release
-            </a>
+            <div class="flex items-center gap-2">
+                <a href="/stats" class="flex items-center gap-1.5 text-xs text-ctp-subtext0 hover:text-ctp-text px-3 py-1.5 transition-colors">
+                    <!-- bar-chart icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    stats
+                </a>
+                <a href="/new" class="flex items-center gap-1.5 text-xs text-ctp-subtext0 hover:text-ctp-text border border-ctp-surface0 hover:border-ctp-surface1 px-3 py-1.5 transition-colors">
+                    <!-- plus icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    new release
+                </a>
+            </div>
         </div>
     </header>
 
