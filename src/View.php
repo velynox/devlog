@@ -43,7 +43,7 @@ class View
     }
 
     /**
-     * Map a release tag to its Catppuccin Mocha color class.
+     * Map a release tag to its Catppuccin Mocha color class (legacy, kept for compat).
      */
     public static function tagColor(string $tag): string
     {
@@ -54,6 +54,24 @@ class View
             'security' => 'text-ctp-peach  border-ctp-peach',
             'docs'     => 'text-ctp-blue   border-ctp-blue',
             default    => 'text-ctp-subtext0 border-ctp-surface1',
+        };
+    }
+
+    /**
+     * Return [textHex, accentHex] for inline-style pill badges (component library style).
+     *
+     * @return array{string, string}
+     */
+    public static function tagColors(string $tag): array
+    {
+        return match ($tag) {
+            'feat'     => ['#a6e3a1', '#a6e3a1'],
+            'fix'      => ['#f9e2af', '#f9e2af'],
+            'breaking' => ['#f38ba8', '#f38ba8'],
+            'security' => ['#fab387', '#fab387'],
+            'docs'     => ['#89b4fa', '#89b4fa'],
+            'chore'    => ['#a6adc8', '#a6adc8'],
+            default    => ['#a6adc8', '#a6adc8'],
         };
     }
 }
